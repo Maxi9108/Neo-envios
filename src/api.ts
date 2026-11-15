@@ -157,3 +157,201 @@ export async function geocodificarInversa(lat: number, lng: number): Promise<str
   }
   return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
 }
+
+// =========================================================================
+// VERIFICACIÓN AUTOMÁTICA CONTRA EL ECOSISTEMA NEOFARO
+// =========================================================================
+const NEOFARO_SUPABASE_URL = "https://hajepxscgwbgiifcfndz.supabase.co";
+const NEOFARO_KEY = (import.meta as any).env?.VITE_NEOFARO_SUPABASE_KEY || "sb_publishable_2mXV3C1pkQcp5SK8xD2FIg_EkjLTAhI";
+
+export interface ResultadoVerificacionNeoFaro {
+  registrado: boolean;
+  idComercio?: string;
+  nombreComercio?: string;
+  email?: string;
+  direccion?: string;
+  telefono?: string;
+  mensaje?: string;
+}
+
+export async function verificarComercioEnNeoFaro(
+  email: string,
+  nombreComercio?: string
+): Promise<ResultadoVerificacionNeoFaro> {
+  const cleanEmail = (email || "").trim().toLowerCase();
+  const cleanNombre = (nombreComercio || "").trim().toLowerCase();
+
+  if (!cleanEmail && !cleanNombre) {
+    return {
+      registrado: false,
+      mensaje: "Ingresa el correo electrónico de tu comercio."
+    };
+  }
+
+  // 1. Administradores maestros siempre autorizados
+  if (cleanEmail === "maxi0802@gmail.com" || cleanEmail === "lic.maxisanchez@gmail.com") {
+    return {
+      registrado: true,
+      nombreComercio: "Administración Central NeoFaro",
+      email: cleanEmail
+    };
+  }
+
+  // 2. Verificar si ya fue provisionado en el Panel Admin de Neo-Envíos
+  const comerciosLocales = getComerciosRegistrados();
+  const matchLocal = comerciosLocales.find(
+    c =>
+      c.emailPropietario.trim().toLowerCase() === cleanEmail ||
+      (cleanNombre && c.nombreComercio.trim().toLowerCase() === cleanNombre)
+  );
+  if (matchLocal) {
+    return {
+      registrado: true,
+      idComercio: matchLocal.idComercio,
+      nombreComercio: matchLocal.nombreComercio,
+      email: matchLocal.emailPropietario
+    };
+  }
+
+  // 3. Intentar vía Serverless Function /api/verificar-neofaro (Vercel)
+  try {
+    const resApi = await fetch("/api/verificar-neofaro", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cleanEmail, nombreComercio: cleanNombre })
+    });
+
+    const contentType = resApi.headers.get("content-type") || "";
+    if (resApi.ok && contentType.includes("application/json")) {
+      const data = await resApi.json();
+      if (typeof data.registrado === "boolean") {
+        return data;
+      }
+    }
+  } catch (_) {
+    // En entorno local Vite dev, continuar con consulta directa a Supabase NeoFaro
+  }
+
+  // 4. Consulta en tiempo real a la Base de Datos de NeoFaro (Supabase)
+  const headers = {
+    apikey: NEOFARO_KEY,
+    Authorization: `Bearer ${NEOFARO_KEY}`,
+    "Content-Type": "application/json"
+  };
+
+  try {
+    // 4a. Buscar en solicitudes_modificacion de NeoFaro
+    const solRes = await fetch(`${NEOFARO_SUPABASE_URL}/rest/v1/solicitudes_modificacion?select=*`, { headers });
+    if (solRes.ok) {
+      const solicitudes = await solRes.json();
+      if (Array.isArray(solicitudes)) {
+        const matchSol = solicitudes.find((s: any) => {
+          const em1 = (s.cambios?.email_comercio || "").trim().toLowerCase();
+          const em2 = (s.cambios?.email || "").trim().toLowerCase();
+          const nom = (s.comercio_nombre || s.cambios?.nombre || "").trim().toLowerCase();
+          return (cleanEmail && (em1 === cleanEmail || em2 === cleanEmail)) || (cleanNombre && nom === cleanNombre);
+        });
+
+        if (matchSol) {
+          return {
+            registrado: true,
+            idComercio: matchSol.comercio_id || matchSol.id,
+            nombreComercio: matchSol.comercio_nombre || matchSol.cambios?.nombre || "Comercio NeoFaro",
+            email: matchSol.cambios?.email_comercio || matchSol.cambios?.email || cleanEmail,
+            direccion: matchSol.cambios?.direccion || "",
+            telefono: matchSol.cambios?.whatsapp || matchSol.cambios?.telefono || ""
+          };
+        }
+      }
+    }
+
+    // 4b. Buscar en tabla 'usuarios' de NeoFaro
+    if (cleanEmail) {
+      const usrRes = await fetch(
+        `${NEOFARO_SUPABASE_URL}/rest/v1/usuarios?email=ilike.${encodeURIComponent(cleanEmail)}&select=*`,
+        { headers }
+      );
+      if (usrRes.ok) {
+        const usuarios = await usrRes.json();
+        if (Array.isArray(usuarios) && usuarios.length > 0) {
+          const u = usuarios[0];
+          let direccion = "";
+          let telefono = "";
+          if (u.comercio_id) {
+            try {
+              const cRes = await fetch(
+                `${NEOFARO_SUPABASE_URL}/rest/v1/comercios?id=eq.${encodeURIComponent(u.comercio_id)}&select=*`,
+                { headers }
+              );
+              if (cRes.ok) {
+                const cList = await cRes.json();
+                if (Array.isArray(cList) && cList.length > 0) {
+                  direccion = cList[0].direccion || "";
+                  telefono = cList[0].telefono || cList[0].whatsapp || "";
+                }
+              }
+            } catch (_) {}
+          }
+          return {
+            registrado: true,
+            idComercio: u.comercio_id || u.id,
+            nombreComercio: u.comercio_nombre || u.nombre || "Comercio NeoFaro",
+            email: u.email,
+            direccion,
+            telefono
+          };
+        }
+      }
+    }
+
+    // 4c. Buscar en tabla 'comercios' de NeoFaro
+    const comRes = await fetch(`${NEOFARO_SUPABASE_URL}/rest/v1/comercios?select=*`, { headers });
+    if (comRes.ok) {
+      const comercios = await comRes.json();
+      if (Array.isArray(comercios) && comercios.length > 0) {
+        const matchCom = comercios.find((c: any) => {
+          const nom = (c.nombre || "").trim().toLowerCase();
+          return cleanNombre && nom === cleanNombre;
+        });
+        if (matchCom) {
+          return {
+            registrado: true,
+            idComercio: matchCom.id,
+            nombreComercio: matchCom.nombre,
+            direccion: matchCom.direccion || "",
+            telefono: matchCom.telefono || ""
+          };
+        }
+      }
+    }
+
+    // 4d. Buscar en Auth Users de NeoFaro
+    if (cleanEmail) {
+      const authRes = await fetch(`${NEOFARO_SUPABASE_URL}/auth/v1/admin/users`, { headers });
+      if (authRes.ok) {
+        const authData = await authRes.json();
+        const usersList = authData?.users || [];
+        const matchUser = usersList.find((u: any) => (u.email || "").trim().toLowerCase() === cleanEmail);
+        if (matchUser) {
+          return {
+            registrado: true,
+            idComercio: matchUser.id,
+            nombreComercio:
+              matchUser.user_metadata?.comercio_nombre ||
+              matchUser.user_metadata?.nombre ||
+              cleanEmail.split("@")[0],
+            email: matchUser.email
+          };
+        }
+      }
+    }
+  } catch (e) {
+    console.warn("Error consultando NeoFaro:", e);
+  }
+
+  return {
+    registrado: false,
+    mensaje:
+      "Este comercio no se encuentra registrado en NeoFaro. Para darte de alta en Neo-Envíos, primero debes estar registrado en la plataforma NeoFaro."
+  };
+}

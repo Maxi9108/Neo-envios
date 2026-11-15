@@ -43,3 +43,4 @@ Plataforma inteligente de control de despachos, logística de entregas en ruta, 
 
 * **En Android (Chrome):** Abre el enlace de Vercel y toca **«Agregar a la pantalla principal»** o **«Instalar aplicación»**.
 * **En iOS (Safari):** Toca el botón Compartir y selecciona **«Agregar a inicio»**.
+
