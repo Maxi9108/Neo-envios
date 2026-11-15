@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos de app móvil NeoFaro */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #09090b;
+  color: #f4f4f5;
+  color-scheme: dark;
+}
+
+/* Ocultar barra de desplazamiento manteniendo funcionalidad */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ======================================================== */
+/* REGLAS ESTRICTAS DE CONTRASTE PARA INPUTS, SELECTS Y TEXTAREAS */
+/* ======================================================== */
+
+/* 1. Entradas sobre fondo oscuro: Texto blanco puro brillante */
+input, textarea, select {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #06b6d4 !important;
+}
+
+/* 2. REQUISITO CLAVE: Si el fondo es blanco o claro, las letras DEBEN ser negras */
+.bg-white input,
+.bg-white textarea,
+.bg-white select,
+input.bg-white,
+textarea.bg-white,
+select.bg-white,
+.bg-zinc-50 input,
+.bg-zinc-100 input,
+.bg-zinc-200 input,
+.bg-zinc-50,
+.bg-zinc-100 {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  caret-color: #000000 !important;
+}
+
+/* 3. Contraseñas (type="password"):
+   Garantizar que las viñetas (dots) sean 100% visibles */
+input[type="password"] {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  letter-spacing: 0.2em !important;
+  font-family: monospace, system-ui, -apple-system, sans-serif !important;
+}
+
+/* Si una contraseña llegase a estar sobre fondo blanco, viñetas negras */
+.bg-white input[type="password"],
+input[type="password"].bg-white {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+/* 4. Prevención contra el Autofill de Chrome/Edge:
+   Evita que el navegador pinte el fondo de blanco/amarillo y deje las letras invisibles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #18181b inset !important;
+  box-shadow: 0 0 0 1000px #18181b inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+  caret-color: #06b6d4 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Autofill en campos con fondo blanco intencional */
+.bg-white input:-webkit-autofill,
+input.bg-white:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #000000 !important;
+  color: #000000 !important;
+}
+
+/* 5. Desplegables <select> y sus <option> en Chromium */
+select option {
+  background-color: #18181b !important;
+  color: #ffffff !important;
+}
+
+/* 6. Selector de fecha (input[type="date"]) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+/* 7. Popups de Leaflet */
+.leaflet-popup-content-wrapper {
+  background-color: #18181b !important;
+  color: #f4f4f5 !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.7) !important;
+  padding: 0.25rem !important;
+  border: 1px solid #27272a !important;
+}
+
+.leaflet-popup-tip {
+  background-color: #18181b !important;
+  border: 1px solid #27272a !important;
+}
+
+.leaflet-popup-content {
+  margin: 0.6rem !important;
+  line-height: 1.4 !important;
+  color: #f4f4f5 !important;
+}
+
+.leaflet-container {
+  font-family: inherit !important;
+  background-color: #121214 !important;
+}

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="100%" stop-color="#09090b"/>
+    </radialGradient>
+    <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
+    </linearGradient>
+    <linearGradient id="beamGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background rounded rect -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGlow)"/>
+  <rect width="512" height="512" rx="128" fill="none" stroke="#27272a" stroke-width="6"/>
+
+  <!-- Light beams from the lighthouse -->
+  <polygon points="256,150 480,80 480,240" fill="url(#beamGradient)" opacity="0.4"/>
+  <polygon points="256,150 32,80 32,240" fill="url(#beamGradient)" opacity="0.4" transform="scale(-1, 1) translate(-512, 0)"/>
+
+  <!-- Glowing beacon light -->
+  <circle cx="256" cy="150" r="32" fill="#22d3ee" filter="url(#glow)"/>
+  <circle cx="256" cy="150" r="16" fill="#ffffff"/>
+
+  <!-- Lighthouse structure -->
+  <path d="M226,180 L286,180 L306,370 L206,370 Z" fill="url(#neonGradient)" filter="url(#glow)"/>
+  <path d="M232,185 L280,185 L296,365 L216,365 Z" fill="#09090b" opacity="0.6"/>
+
+  <!-- Stripes on the lighthouse -->
+  <line x1="220" y1="240" x2="292" y2="240" stroke="#22d3ee" stroke-width="8" stroke-linecap="round"/>
+  <line x1="214" y1="300" x2="298" y2="300" stroke="#8b5cf6" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Base and Waves / Delivery Route lines -->
+  <path d="M140,390 Q256,360 372,390" fill="none" stroke="#06b6d4" stroke-width="12" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M170,420 Q256,395 342,420" fill="none" stroke="#8b5cf6" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Delivery badge at bottom center -->
+  <circle cx="256" cy="405" r="36" fill="#09090b" stroke="#22d3ee" stroke-width="6"/>
+  <!-- Truck symbol in badge -->
+  <path d="M242,400 L256,400 L262,406 L268,406 L268,414 L242,414 Z M246,415 A3,3 0 1,0 246,421 A3,3 0 1,0 246,415 M264,415 A3,3 0 1,0 264,421 A3,3 0 1,0 264,415" fill="#22d3ee"/>
+</svg>
